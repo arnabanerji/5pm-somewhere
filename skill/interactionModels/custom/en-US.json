@@ -1,0 +1,40 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "five p. m.",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "FivePMCheck",
+          "slots": [],
+          "samples": [
+            "five pm somewhere",
+            "where it\u0027s five PM",
+            "five pm anywhere",
+            "five pm where",
+            "where\u0027s it five PM",
+            "where is it five PM",
+            "is it five PM anywhere"
+          ]
+        }
+      ],
+      "types": []
+    }
+  },
+  "version": "6"
+}
