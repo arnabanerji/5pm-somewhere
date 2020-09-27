@@ -1,5 +1,7 @@
 # 5pm-somewhere
-It's 5 PM somewhere. This skill lets Alexa tell you where that is.
+"It's 5 PM somewhere!"
+
+Is it really? Now, Alexa can tell you.
 
 ## Overview
 The skill is based on the simple Hello World example skill and defines a single custom intent (`FivePMCheck`) that pulls all timezones with specific locations from http://worldtimeapi.org/. It then randomly chooses one of the locations where it is between 1700 and 1800 hours and announces the location and time with a randomly selected toast.
