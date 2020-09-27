@@ -1,9 +1,22 @@
 # -*- coding: utf-8 -*-
 
-# This sample demonstrates handling intents from an Alexa skill using the Alexa Skills Kit SDK for Python.
-# Please visit https://alexa.design/cookbook for additional examples on implementing slots, dialog management,
-# session persistence, api calls, and more.
-# This sample is built using the handler classes approach in skill builder.
+# 5pm Somewhere -- an Alexa skill to let you know where it's 5pm
+# Copyright (C) 2020  Arnab Banerji
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 import logging
 import json
 import datetime
@@ -53,29 +66,31 @@ class FivePMCheckIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        
         retries = Retry(connect=2, read=2, status=2)
         http = PoolManager(retries=retries)
         
-        def get_time(timezone):
-            time_object = json.loads(http.request("GET", "http://worldtimeapi.org/api/timezone/" + timezone).data)
+        def get_time(location):
+            # get time for location (e.g. America/New_York)
+            time_object = json.loads(http.request("GET", "http://worldtimeapi.org/api/timezone/" + location).data)
             dt_in_tz = datetime.datetime.strptime(time_object["datetime"][:-6], "%Y-%m-%dT%H:%M:%S.%f")
             return dt_in_tz
         
         try:
             zonelist = json.loads(http.request("GET", "http://worldtimeapi.org/api/timezone").data)
+            # filter out zones/locations without specific names
             zonelist = [zone for zone in zonelist if "etc" not in zone.lower() and "/" in zone.lower()]
 
             times = []
+            # concurrently query for all possible times
             with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
-                # Start the load operations and mark each future with its URL
+                # Start the load operations and mark each future with its zone
                 future_to_zone = {executor.submit(get_time, zone): zone for zone in zonelist}
                 for future in concurrent.futures.as_completed(future_to_zone):
                     zone = future_to_zone[future]
                     try:
                         time = future.result()
-                    except Exception as exc:
-                        print('%r generated an exception: %s' % (url, exc))
+                    except Exception:
+                        logging.error("Error loading time for zone %s. Ignoring.", zone, exc_info=1)
                     else:
                         if time.hour == 17:
                             place = zone
@@ -94,14 +109,15 @@ class FivePMCheckIntentHandler(AbstractRequestHandler):
                 chosen = random.choice(times)
                 toast = random.choice(["Cheers", "Bottoms up", "Prost", "Skol", "Salud"])
                 speak_output = "It's {} in {}. {}!".format(chosen["time"], chosen["place"].replace("_", " "), toast)
-        except MaxRetryError:
-            logging.error("Error connecting to World Time API", exc_info=1)
-            speak_output = "I'm having trouble finding the time around the world, but it's five PM somewhere! Try again later."
+            else:
+                speak_output = "Oh no, looks like it actually isn't 5 PM for anyone right now. There's something worth drinking about!"
+        except Exception:
+            logging.error("Error while accessing World Time API", exc_info=1)
+            speak_output = "I'm having trouble checking the time, but it's five PM somewhere! Try again later."
 
         return (
             handler_input.response_builder
                 .speak(speak_output)
-                # .ask("add a reprompt if you want to keep the session open for the user to respond")
                 .response
         )
 
@@ -189,7 +205,6 @@ class IntentReflectorHandler(AbstractRequestHandler):
         return (
             handler_input.response_builder
                 .speak(speak_output)
-                # .ask("add a reprompt if you want to keep the session open for the user to respond")
                 .response
         )
 

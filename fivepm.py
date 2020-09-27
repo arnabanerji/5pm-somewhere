@@ -13,6 +13,7 @@ from urllib3.exceptions import MaxRetryError
 retries = Retry(connect=2, read=2, status=2)
 http = PoolManager(retries=retries)
 
+
 def get_time(timezone):
     time_object = json.loads(http.request("GET", "http://worldtimeapi.org/api/timezone/" + timezone).data)
     dt_in_tz = datetime.datetime.strptime(time_object["datetime"][:-6], "%Y-%m-%dT%H:%M:%S.%f")
